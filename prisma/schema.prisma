@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// prisma/schema.prisma
+datasource db {
+  provider  = "postgresql"
+  url  	    = env("DATABASE_URL")
+  // uncomment next line if you use Prisma <5.10
+  // directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  points    Int      @default(0)
+  isBanned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  completions TaskCompletion[]
+}
+
+model Task {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  rewardPoints Int
+  targetUrl    String
+  duration     Int
+  dailyLimit   Int
+  active       Boolean  @default(true)
+
+  completions TaskCompletion[]
+}
+
+model TaskCompletion {
+  id        String   @id @default(uuid())
+  userId    String
+  taskId    String
+  status    CompletionStatus @default(PENDING)
+  ip        String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@unique([userId, taskId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum CompletionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
